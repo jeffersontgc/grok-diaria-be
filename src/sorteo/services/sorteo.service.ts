@@ -85,12 +85,9 @@ export class SorteosService {
 
   async suggestNumbersv3(drawDate: string): Promise<SuggestNumbersResponse> {
     try {
-      console.log('suggestNumbersv3 called with drawDate:', drawDate);
-
       // Validar formato de fecha
       const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
       if (!dateRegex.test(drawDate)) {
-        console.log('Invalid date format:', drawDate);
         return {
           status: 'error',
           numbers: [],
@@ -337,34 +334,14 @@ export class SorteosService {
   }
 
   toDDMMYYYY(date: Date): string {
-    console.log('toDDMMYYYY called with date:', date);
-    console.log('date.getTime():', date.getTime());
-    console.log('date.getUTCDate():', date.getUTCDate());
-    console.log('date.getUTCMonth():', date.getUTCMonth());
-    console.log('date.getUTCFullYear():', date.getUTCFullYear());
-
     if (!date || isNaN(date.getTime())) {
       throw new Error('Invalid date provided to toDDMMYYYY');
     }
 
-    // Usar UTC para evitar problemas de zona horaria
-    const d = String(date.getUTCDate() || date.getDate() || 0).padStart(2, '0');
-    const m = String((date.getUTCMonth() || date.getMonth() || 0) + 1).padStart(
-      2,
-      '0',
-    );
-    const y = date.getUTCFullYear() || date.getFullYear() || 0;
-
-    console.log('Formatted components - d:', d, 'm:', m, 'y:', y);
-
-    // Validar que los valores sean números válidos
-    if (isNaN(Number(d)) || isNaN(Number(m)) || isNaN(Number(y))) {
-      throw new Error('Invalid date components');
-    }
-
-    const result = `${d}/${m}/${y}`;
-    console.log('toDDMMYYYY result:', result);
-    return result;
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
   }
 
   getPubSub() {
