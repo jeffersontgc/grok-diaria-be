@@ -1,0 +1,69 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateSorteoInput {
+  drawDate: String!
+  drawNumber: String!
+  drawTime: String!
+  multiplier: String!
+  multiplierValue: String!
+  winningNumber: Int!
+}
+
+type HitRate {
+  hitRate: Int!
+  hits: Int!
+  source: String!
+  totalSuggested: Int!
+}
+
+type Metrics {
+  aiMetrics: HitRate!
+  crossMetrics: HitRate!
+  grokMetrics: HitRate!
+}
+
+type Mutation {
+  createSorteo(args: CreateSorteoInput!): SuccessResponse!
+  deleteSorteo(uuid: String!): SuccessResponse!
+  updateSorteo(args: UpdateSorteoInput!): SuccessResponse!
+}
+
+type Query {
+  sorteoByUuid(uuid: String!): Sorteo!
+  sorteos: [Sorteo!]!
+  suggestNumbers(drawDate: String!): SuggestNumbersResponse!
+}
+
+type Sorteo {
+  drawDate: String!
+  drawNumber: String!
+  drawTime: String!
+  id: String!
+  multiplier: String!
+  multiplierValue: String!
+  uuid: String!
+  winningNumber: String!
+}
+
+type SuccessResponse {
+  status: String!
+}
+
+type SuggestNumbersResponse {
+  message: String
+  metrics: Metrics
+  numbers: [Int!]!
+  status: String!
+}
+
+input UpdateSorteoInput {
+  drawDate: String
+  drawNumber: String
+  drawTime: String
+  multiplier: String
+  multiplierValue: String
+  uuid: String!
+  winningNumber: Int
+}
