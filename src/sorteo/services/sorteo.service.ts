@@ -85,9 +85,12 @@ export class SorteosService {
 
   async suggestNumbersv3(drawDate: string): Promise<SuggestNumbersResponse> {
     try {
+      console.log('suggestNumbersv3 called with drawDate:', drawDate);
+
       // Validar formato de fecha
       const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
       if (!dateRegex.test(drawDate)) {
+        console.log('Invalid date format:', drawDate);
         return {
           status: 'error',
           numbers: [],
@@ -97,21 +100,24 @@ export class SorteosService {
 
       // Parsear la fecha
       const [day, month, year] = drawDate.split('/').map(Number);
-      const targetDate = new Date(year, month - 1, day);
+
+      // Crear fecha usando UTC para consistencia
+      const targetDate = new Date(Date.UTC(year, month - 1, day));
       if (isNaN(targetDate.getTime())) {
         return { status: 'error', numbers: [], message: 'Invalid date' };
       }
 
-      // Validar que la fecha sea futura o de hoy
+      // Validar que la fecha sea futura o de hoy (usando UTC)
       const currentDate = new Date();
-      if (
-        targetDate <
-        new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          currentDate.getDate(),
-        )
-      ) {
+      const todayUTC = new Date(
+        Date.UTC(
+          currentDate.getUTCFullYear(),
+          currentDate.getUTCMonth(),
+          currentDate.getUTCDate(),
+        ),
+      );
+
+      if (targetDate < todayUTC) {
         return {
           status: 'error',
           numbers: [],
@@ -127,11 +133,23 @@ export class SorteosService {
 
       // Obtener sorteos de los últimos 14 días antes de drawDate
       const fourteenDaysAgo = new Date(targetDate);
-      fourteenDaysAgo.setDate(targetDate.getDate() - 14);
+      fourteenDaysAgo.setUTCDate(targetDate.getUTCDate() - 14);
 
       // Calcular rangos para comparación
-      const startDateStr = this.toDDMMYYYY(fourteenDaysAgo);
-      const endDateStr = this.toDDMMYYYY(targetDate);
+      let startDateStr: string;
+      let endDateStr: string;
+
+      try {
+        startDateStr = this.toDDMMYYYY(fourteenDaysAgo);
+        endDateStr = this.toDDMMYYYY(targetDate);
+      } catch (error) {
+        console.error('Error formatting dates:', error);
+        return {
+          status: 'error',
+          numbers: [],
+          message: 'Error processing date format',
+        };
+      }
 
       const allSorteos = await this.sorteosRepository.find();
 
@@ -159,9 +177,15 @@ export class SorteosService {
 
       // Algoritmo original
       const dateDigits = [
-        ...String(day).padStart(2, '0').split(''),
-        ...String(month).padStart(2, '0').split(''),
-        ...String(year).slice(-2).split(''),
+        ...String(day || 0)
+          .padStart(2, '0')
+          .split(''),
+        ...String(month || 0)
+          .padStart(2, '0')
+          .split(''),
+        ...String(year || 0)
+          .slice(-2)
+          .split(''),
       ].map(Number);
       const seed = dateDigits.reduce((a, b) => a + b, 0) % 100;
 
@@ -313,10 +337,34 @@ export class SorteosService {
   }
 
   toDDMMYYYY(date: Date): string {
-    const d = String(date.getDate()).padStart(2, '0');
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const y = date.getFullYear();
-    return `${d}/${m}/${y}`;
+    console.log('toDDMMYYYY called with date:', date);
+    console.log('date.getTime():', date.getTime());
+    console.log('date.getUTCDate():', date.getUTCDate());
+    console.log('date.getUTCMonth():', date.getUTCMonth());
+    console.log('date.getUTCFullYear():', date.getUTCFullYear());
+
+    if (!date || isNaN(date.getTime())) {
+      throw new Error('Invalid date provided to toDDMMYYYY');
+    }
+
+    // Usar UTC para evitar problemas de zona horaria
+    const d = String(date.getUTCDate() || date.getDate() || 0).padStart(2, '0');
+    const m = String((date.getUTCMonth() || date.getMonth() || 0) + 1).padStart(
+      2,
+      '0',
+    );
+    const y = date.getUTCFullYear() || date.getFullYear() || 0;
+
+    console.log('Formatted components - d:', d, 'm:', m, 'y:', y);
+
+    // Validar que los valores sean números válidos
+    if (isNaN(Number(d)) || isNaN(Number(m)) || isNaN(Number(y))) {
+      throw new Error('Invalid date components');
+    }
+
+    const result = `${d}/${m}/${y}`;
+    console.log('toDDMMYYYY result:', result);
+    return result;
   }
 
   getPubSub() {
