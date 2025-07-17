@@ -104,35 +104,15 @@ export class SorteosService {
         return { status: 'error', numbers: [], message: 'Invalid date' };
       }
 
-      // Validar que la fecha sea futura o de hoy (sin UTC, solo fecha)
+      // Validar que la fecha sea futura o de hoy (usando UTC)
       const currentDate = new Date();
-      const today = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate(),
+      const todayUTC = new Date(
+        Date.UTC(
+          currentDate.getUTCFullYear(),
+          currentDate.getUTCMonth(),
+          currentDate.getUTCDate(),
+        ),
       );
-      const targetDateOnly = new Date(
-        targetDate.getFullYear(),
-        targetDate.getMonth(),
-        targetDate.getDate(),
-      );
-
-      console.log(
-        'drawDate recibido:',
-        drawDate,
-        'targetDate:',
-        targetDate,
-        'today:',
-        today,
-      );
-
-      if (targetDateOnly < today) {
-        return {
-          status: 'error',
-          numbers: [],
-          message: 'Date must be in the future',
-        };
-      }
 
       // --- FUNCIÓN para convertir DD/MM/YYYY a YYYYMMDD para comparación ---
       function toYYYYMMDD(dateStr: string): string {
