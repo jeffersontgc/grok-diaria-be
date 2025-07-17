@@ -83,7 +83,10 @@ export class SorteosService {
     }
   }
 
-  async suggestNumbersv3(drawDate: string): Promise<SuggestNumbersResponse> {
+  async suggestNumbersv3(
+    drawDate: string,
+    drawTime: string,
+  ): Promise<SuggestNumbersResponse> {
     try {
       // Validar formato de fecha
       const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -95,24 +98,37 @@ export class SorteosService {
         };
       }
 
+      // Validar formato de hora (AM/PM)
+      const validTimes = ['11:00 AM', '3:00 PM', '6:00 PM', '9:00 PM'];
+      if (!validTimes.includes(drawTime)) {
+        return {
+          status: 'error',
+          numbers: [],
+          message:
+            'Invalid time. Use one of: 11:00 AM, 3:00 PM, 6:00 PM, 9:00 PM',
+        };
+      }
+
       // Parsear la fecha
       const [day, month, year] = drawDate.split('/').map(Number);
-
-      // Crear fecha usando UTC para consistencia
       const targetDate = new Date(Date.UTC(year, month - 1, day));
       if (isNaN(targetDate.getTime())) {
         return { status: 'error', numbers: [], message: 'Invalid date' };
       }
 
-      // Validar que la fecha sea futura o de hoy (usando UTC)
-      const currentDate = new Date();
-      const todayUTC = new Date(
-        Date.UTC(
-          currentDate.getUTCFullYear(),
-          currentDate.getUTCMonth(),
-          currentDate.getUTCDate(),
-        ),
-      );
+      // Si es 6:00 PM, solo permitir si es sábado
+      if (drawTime === '6:00 PM') {
+        // 0 = domingo, 6 = sábado
+        const dayOfWeek = targetDate.getUTCDay();
+        if (dayOfWeek !== 6) {
+          return {
+            status: 'error',
+            numbers: [],
+            message:
+              'El sorteo de las 6:00 PM solo está disponible los sábados',
+          };
+        }
+      }
 
       // --- FUNCIÓN para convertir DD/MM/YYYY a YYYYMMDD para comparación ---
       function toYYYYMMDD(dateStr: string): string {
@@ -120,14 +136,12 @@ export class SorteosService {
         return `${y}${m.padStart(2, '0')}${d.padStart(2, '0')}`;
       }
 
-      // Obtener sorteos de los últimos 14 días antes de drawDate
+      // Obtener sorteos de los últimos 14 días antes de drawDate Y con drawTime igual
       const fourteenDaysAgo = new Date(targetDate);
       fourteenDaysAgo.setUTCDate(targetDate.getUTCDate() - 14);
 
-      // Calcular rangos para comparación
       let startDateStr: string;
       let endDateStr: string;
-
       try {
         startDateStr = this.toDDMMYYYY(fourteenDaysAgo);
         endDateStr = this.toDDMMYYYY(targetDate);
@@ -145,26 +159,33 @@ export class SorteosService {
       const startNum = Number(toYYYYMMDD(startDateStr));
       const endNum = Number(toYYYYMMDD(endDateStr));
 
+      // Filtrar por fecha y horario
       const recentSorteos = allSorteos.filter((s) => {
         const sorteoDateNum = Number(toYYYYMMDD(s.drawDate));
-        return sorteoDateNum >= startNum && sorteoDateNum < endNum;
+        return (
+          sorteoDateNum >= startNum &&
+          sorteoDateNum < endNum &&
+          s.drawTime === drawTime
+        );
       });
 
       if (recentSorteos.length === 0) {
         return {
           status: 'error',
           numbers: [],
-          message: 'No historical data available for the last 14 days',
+          message:
+            'No historical data available for the last 14 days for this time',
         };
       }
 
-      // Obtener sugerencias de OpenAI
+      // Obtener sugerencias de OpenAI (pasar drawTime)
       const aiSuggestions = await this.openAIService.suggestNumbers(
         recentSorteos,
         drawDate,
+        drawTime,
       );
 
-      // Algoritmo original
+      // Algoritmo original (igual, pero usando recentSorteos)
       const dateDigits = [
         ...String(day || 0)
           .padStart(2, '0')
@@ -272,7 +293,9 @@ export class SorteosService {
         // Verificar cada sugerencia contra TODOS los números ganadores históricos
         suggestions.forEach((suggestion) => {
           const hitsForThisSuggestion = allSorteos.filter(
-            (sorteo) => sorteo.winningNumber === suggestion,
+            (sorteo) =>
+              sorteo.winningNumber === suggestion &&
+              sorteo.drawTime === drawTime,
           ).length;
 
           totalHits += hitsForThisSuggestion;

@@ -44,7 +44,8 @@ export class SorteosResolver {
   @Query(() => SuggestNumbersResponse)
   async suggestNumbers(
     @Args('drawDate') drawDate: string,
+    @Args('drawTime') drawTime: string,
   ): Promise<SuggestNumbersResponse> {
-    return this.sorteosService.suggestNumbersv3(drawDate);
+    return this.sorteosService.suggestNumbersv3(drawDate, drawTime);
   }
 }

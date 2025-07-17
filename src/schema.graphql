@@ -33,7 +33,7 @@ type Mutation {
 type Query {
   sorteoByUuid(uuid: String!): Sorteo!
   sorteos: [Sorteo!]!
-  suggestNumbers(drawDate: String!): SuggestNumbersResponse!
+  suggestNumbers(drawDate: String!, drawTime: String!): SuggestNumbersResponse!
 }
 
 type Sorteo {

@@ -13,7 +13,11 @@ export class OpenAIService {
     });
   }
 
-  async suggestNumbers(sorteos: Sorteo[], drawDate: string): Promise<number[]> {
+  async suggestNumbers(
+    sorteos: Sorteo[],
+    drawDate: string,
+    drawTime: string,
+  ): Promise<number[]> {
     // Máximo de intentos
     const maxRetries = 3;
 
@@ -25,7 +29,7 @@ export class OpenAIService {
       try {
         // Usar el modelo gpt-4o
         const prompt = `
-          You are an expert in pattern analysis for lottery number prediction. Below is a list of lottery results from the last 14 days, with fields: drawDate (DD/MM/YYYY), drawTime (e.g., '11:00 AM'), drawNumber, winningNumber (0-99), multiplier (e.g., '2x', 'Gratis'), and multiplierValue. Your task is to analyze these results and suggest up to 5 likely two-digit numbers (0-99) for the next lottery draw on ${drawDate}. Focus on:
+          You are an expert in pattern analysis for lottery number prediction. Below is a list of lottery results from the last 14 days, with fields: drawDate (DD/MM/YYYY), drawTime (e.g., '11:00 AM'), drawNumber, winningNumber (0-99), multiplier (e.g., '2x', 'Gratis'), and multiplierValue. Your task is to analyze these results and suggest up to 5 likely two-digit numbers (0-99) for the next lottery draw on ${drawDate} at ${drawTime}. Focus on:
           - Frequency of winning numbers.
           - Patterns related to drawTime (e.g., numbers more common in morning vs. evening).
           - Influence of multipliers on number trends.
@@ -35,7 +39,7 @@ export class OpenAIService {
           Recent results:
           ${JSON.stringify(sorteos, null, 2)}
 
-          Suggest numbers for ${drawDate}:
+          Suggest numbers for ${drawDate} at ${drawTime}:
         `;
 
         // Usar el modelo gpt-4o
