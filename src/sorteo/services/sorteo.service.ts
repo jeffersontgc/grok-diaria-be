@@ -104,17 +104,19 @@ export class SorteosService {
         return { status: 'error', numbers: [], message: 'Invalid date' };
       }
 
-      // Validar que la fecha sea futura o de hoy (usando UTC)
+      // Validar que la fecha sea futura o de hoy (sin UTC, solo fecha)
       const currentDate = new Date();
-      const todayUTC = new Date(
-        Date.UTC(
-          currentDate.getUTCFullYear(),
-          currentDate.getUTCMonth(),
-          currentDate.getUTCDate(),
-        ),
+      const today = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate(),
       );
-
-      if (targetDate < todayUTC) {
+      const targetDateOnly = new Date(
+        targetDate.getFullYear(),
+        targetDate.getMonth(),
+        targetDate.getDate(),
+      );
+      if (targetDateOnly < today) {
         return {
           status: 'error',
           numbers: [],
