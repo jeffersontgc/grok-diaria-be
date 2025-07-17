@@ -116,6 +116,16 @@ export class SorteosService {
         targetDate.getMonth(),
         targetDate.getDate(),
       );
+
+      console.log(
+        'drawDate recibido:',
+        drawDate,
+        'targetDate:',
+        targetDate,
+        'today:',
+        today,
+      );
+
       if (targetDateOnly < today) {
         return {
           status: 'error',
